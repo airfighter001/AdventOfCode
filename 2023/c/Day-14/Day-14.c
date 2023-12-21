@@ -16,51 +16,71 @@ int readInput(char prompts[][LINE_SIZE]){
 	return (fclose(input) & 0) | (i - 1);
 }
 
-void moveStone(char input[][LINE_SIZE], int x, int y) {
+void moveStone(char input[][LINE_SIZE], int x, int y, int xDir, int yDir) {
 	input[x][y] = '.';
-	while (x > -1 && !strchr("#O", input[x][y])) {
-		x--;
+	while (!(x + xDir < 0 || y + yDir < 0 || x + xDir >= LINES || (y + yDir >= (int)strlen(input[0]) - 1) || strchr("#O", input[x + xDir][y + yDir]))) {
+		x += xDir;
+		y += yDir;
 	}
-	input[x + 1][y] = 'O';
-	printf(" -> %d %d\n", x + 1, y);
+	input[x][y] = 'O';
 }
 
-void tiltPlatform(char input[][LINE_SIZE]) {
-	for (int i = 1; i < LINES; i++) {
-		for (int j = 0; j < (int)strlen(input[0]) - 1; j++) {
-			if (input[i][j] == 'O') { 
-				printf("%d %d", i, j);
-				moveStone(input, i, j); 
-			}		
+void tiltPlatform(char input[][LINE_SIZE], int xDir, int yDir) {
+	if (xDir < 0 || yDir < 0) {
+		for (int i = 0; i < LINES; i++) {
+			for (int j = 0; j < (int)strlen(input[0]) - 1; j++) {
+				if (input[i][j] == 'O') { moveStone(input, i, j, xDir, yDir); }		
+			}
+		}
+	}
+	if (xDir > 0 || yDir > 0) {
+		for (int i = LINES - 1; i > - 1; i--) {
+			for (int j = (int)strlen(input[0]) - 1; j > -1; j--) {
+				if (input[i][j] == 'O') { moveStone(input, i, j, xDir, yDir); }		
+			}
 		}
 	}
 }
 
-int countWeight(char input[][LINE_SIZE]) {
+int countWeight(char input[][LINE_SIZE], int part) {
 	int sum = 0;
 	for (int i = 0; i < LINES; i++) {
 		for (int j = 0; j < (int)strlen(input[0]); j++) {
-			if (input[i][j] == 'O') { sum += LINES - i; printf("%d %d %d\n", LINES - i, i, j);}	
+			if (input[i][j] == 'O') { sum += LINES - i; }	
 		}
 	
 	}
+	if (part == 1) { printf("Load after 1 tilt: %d\n", sum); }
 	return sum;
+}
+
+int findCycle(int weights[1000]) {
+	int length;
+	for (int i = 8; i < 500; i++) {
+		if (weights[200] == weights[200 + i]) {
+			length = 0;
+			while (weights[200 + length] == weights[200 + i + length]) {
+				length++;
+				if (length > i) { return length; }
+			}
+		}	
+	}
+	return -1;
 }
 
 int main() {
 	char input[LINES][LINE_SIZE];
-	puts("here");
 	readInput(input);
-	puts("here");
-	//printf("%ld\n", strlen(input[0]));
-	//printf("%c\n", input[1][3]);
-	puts("test");
-	tiltPlatform(input);
-	puts("test2");
-	for (int i = 0; i < LINES; i++) {
-		fprintf(stdout, "%d %s",i, input[i]);
+	int weights[1000];
+	for (int i = 0; i < 1000; i++) {
+		tiltPlatform(input, -1, 0);
+		if (i == 0) { countWeight(input,1); }
+		tiltPlatform(input, 0, -1);
+		tiltPlatform(input, 1, 0);
+		tiltPlatform(input, 0, 1);
+		weights[i] = countWeight(input, 2);
 	}
-	int result = countWeight(input);
-	printf("%d\n", result);
+	int length = findCycle(weights);
+	printf("Weight after 1mrd cylces: %d\n", weights[200 + (1000000000 - 201) % (length - 1)]);
 	return 0;
 }
