@@ -21,18 +21,18 @@ void parseInput(const int lines, char input[][LINE_SIZE], int fst[], int snd[]) 
     }
 }
 
+int compare(const void *a, const void *b) {
+    const int int_a = *(int *)a;
+    const int int_b = *(int *)b;
+    return int_a - int_b;
+}
+
 void sumDifferences(int fst[], int snd[], const int lines) {
     int diffs = 0;
     for (int i = 0; i < lines; i++) {
         diffs += abs(fst[i] - snd[i]);
     }
     fprintf(stdout, "%d\n", diffs);
-}
-
-int compare(const void *a, const void *b) {
-    const int int_a = *(int *)a;
-    const int int_b = *(int *)b;
-    return int_a - int_b;
 }
 
 void similarity(const int fst[], const int snd[], const int lines) {
