@@ -6,7 +6,7 @@
 #define LINES 140
 
 int readInput(char prompts[][LINE_SIZE]){
-	FILE *input = fopen("./12test.txt", "r");
+	FILE *input = fopen("./12input.txt", "r");
 	int i = 0;
 	if (input != NULL){
 		while (fgets(prompts[i++],LINE_SIZE,input) != NULL) {}
@@ -14,100 +14,51 @@ int readInput(char prompts[][LINE_SIZE]){
 	return (fclose(input) & 0) | (i - 1);
 }
 
+int isOob (int x, int y, int xDir, int yDir) {
+	return !(x + xDir < 0 || x + xDir > LINES || y + yDir < 0 || y + yDir > LINES);
+}
+
 int * getRegionPrice(char input[][LINE_SIZE], int lines, int plots[][LINE_SIZE], int x, int y, int fieldCount) {
-    int maxDims[4] = {x,x,y,y};
-	int *result = (int *)calloc(sizeof(int), 2);
+	int *result = (int *)calloc(sizeof(int), 2), dir[4][2] = { {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
     if (x - 1 < 0 || input[x-1][y] != input[x][y]) result[1]++;
 	if (x + 1 > lines || input[x+1][y] != input[x][y]) result[1]++;
 	if (y - 1 < 0 || input[x][y-1] != input[x][y]) result[1]++;
 	if (y + 1 > lines || input[x][y+1] != input[x][y]) result[1]++;
     plots[x][y] = fieldCount;
     result[0]++;
-	if (x - 1 >= 0 && input[x-1][y] == input[x][y] && plots[x-1][y] == 0) {
-		int *upResult = getRegionPrice(input, lines, plots, x - 1, y, fieldCount);
-		result[0] += upResult[0];
-		result[1] += upResult[1];
-	}
-	if (x + 1 < lines && input[x+1][y] == input[x][y] && plots[x+1][y] == 0) {
-		int *downResult = getRegionPrice(input, lines, plots, x + 1, y, fieldCount);
-		result[0] += downResult[0];
-		result[1] += downResult[1];
-	}
-	if (y - 1 >= 0 && input[x][y-1] == input[x][y] && plots[x][y-1] == 0) {
-		int *leftResult = getRegionPrice(input, lines, plots, x, y - 1, fieldCount);
-		result[0] += leftResult[0];
-		result[1] += leftResult[1];
-	}
-	if (y + 1 < lines && input[x][y+1] == input[x][y] && plots[x][y+1] == 0) {
-		int *rightResult = getRegionPrice(input, lines, plots, x, y + 1, fieldCount);
-		result[0] += rightResult[0];
-		result[1] += rightResult[1];
-	}
+    for (int i = 0; i < 4; i++) {
+    	if (isOob(x,y,dir[i][0], dir[i][1]) && input[x+dir[i][0]][y+dir[i][1]] == input[x][y] && plots[x+dir[i][0]][y+dir[i][1]] == 0) {
+    		int *recRes = getRegionPrice(input, lines, plots, x + dir[i][0], y + dir[i][1], fieldCount);
+    		result[0] += recRes[0];
+    		result[1] += recRes[1];
+    	}
+    }
 	return result;
 }
 
+int isValid(int plots[][LINE_SIZE], int lines, int x, int y, int xDir, int yDir) {
+	return (!isOob(x ,y ,xDir ,yDir) || plots[x + xDir][y + yDir] != plots[x][y] );
+}
+
 int getNewFenceRules(int plots[][LINE_SIZE], int lines, int x, int y) {
-    int sum = 0, counting = 1, gap = 0;
-	for (int i = 0; i < lines; i++) {
-        for (int j = 0; j < lines; j++) {
-        	if (counting && plots[i][j] == plots[x][y] && (i - 1 < 0 || plots[i-1][j] != plots[x][y])) {
-            	sum++;
-                counting = 0;
-        	}
-            if (counting == 0 && (plots[i][j] != plots[x][y] || plots[i-1][j] == plots[x][y])) {
-            	gap = 1;
-            }
-            if (counting == 0 && gap == 1) {
-            	counting = 1;
-                gap = 0;
-            }
-        }
-	}
-	for (int i = 0; i < lines; i++) {
-		for (int j = 0; j < lines; j++) {
-			if (counting && plots[i][j] == plots[x][y] && (i +1 > lines || plots[i+1][j] != plots[x][y])) {
-				sum++;
-				counting = 0;
-			}
-			if (counting == 0 && (plots[i][j] != plots[x][y] || plots[i+1][j] == plots[x][y])) {
-				gap = 1;
-			}
-			if (counting == 0 && gap == 1) {
-				counting = 1;
-				gap = 0;
-			}
-		}
-	}
-	for (int j = 0; j < lines; j++) {
+    int sum = 0, co = 1, gap = 0, dir[4][2] = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+    for (int d = 0; d < 4; d++) {
 		for (int i = 0; i < lines; i++) {
-			if (counting && plots[i][j] == plots[x][y] && (j - 1 < 0 || plots[i][j-1] != plots[x][y])) {
-				sum++;
-				counting = 0;
-			}
-			if (counting == 0 && (plots[i][j] != plots[x][y] || plots[i][j-1] == plots[x][y])) {
-				gap = 1;
-			}
-			if (counting == 0 && gap == 1) {
-				counting = 1;
-				gap = 0;
-			}
-		}
-	}
-	for (int j = 0; j < lines; j++) {
-		for (int i = 0; i < lines; i++) {
-			if (counting && plots[i][j] == plots[x][y] && (j + 1 > lines || plots[i][j+1] != plots[x][y])) {
-				sum++;
-				counting = 0;
-			}
-			if (counting == 0 && (plots[i][j] != plots[x][y] || plots[i][j+1] == plots[x][y])) {
-				gap = 1;
-			}
-			if (counting == 0 && gap == 1) {
-				counting = 1;
-				gap = 0;
+			for (int j = 0; j < lines; j++) {
+				if ((d < 2 && co && plots[i][j] == plots[x][y] && isValid(plots, lines, i, j, dir[d][0], dir[d][1])) ||
+            			d > 1 && co && plots[j][i] == plots[x][y] && isValid(plots, lines, j, i, dir[d][0], dir[d][1])) {
+					sum++;
+					co = 0;
+				}
+				if (d < 2 && co == 0 && (plots[i][j] != plots[x][y] || plots[i+dir[d][0]][j+dir[d][1]] == plots[x][y])) gap = 1;
+				if (d > 1 && co == 0 && (plots[j][i] != plots[x][y] || plots[j+dir[d][0]][i+dir[d][1]] == plots[x][y])) gap = 1;
+				if (co == 0 && gap == 1) {
+					co = 1;
+					gap = 0;
+				}
 			}
 		}
-	}
+    }
     return sum;
 }
 
@@ -116,8 +67,7 @@ void buildFencingPrice(char input[][LINE_SIZE], int lines, int plots[][LINE_SIZE
 	for (int i = 0; i < lines; i++) {
         for (int j = 0; j < lines; j++) {
         	if (plots[i][j] == 0) {
-                int * region = getRegionPrice(input, lines, plots,i,j, fieldCount);
-                fieldCount++;
+                int * region = getRegionPrice(input, lines, plots,i,j, fieldCount++);
                 sum += region[0] * region[1];
                 sum2 += region[0] * getNewFenceRules(plots, lines, i, j);
         	}
