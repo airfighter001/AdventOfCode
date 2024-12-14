@@ -3,8 +3,6 @@
 
 #define LINE_SIZE 128
 #define LINES 512
-//#define GRID_X 7
-//#define GRID_Y 11
 #define GRID_X 103
 #define GRID_Y 101
 
@@ -27,34 +25,6 @@ void parseInput(char input[LINES][LINE_SIZE], int lines, Bot bots[]) {
   }
 }
 
-void printGrid(int lines, Bot bots[]) {
-  char grid[GRID_X][GRID_X];
-  for (int i = 0; i < GRID_X; i++) {
-    for (int j = 0; j < GRID_Y; j++) {
-      grid[i][j] = '.';
-    }
-  }
-  for (int i = 0; i < lines; i++) {
-    grid[bots[i].pos[0]][bots[i].pos[1]] = 'X';
-  }
-  for (int i = 0; i < GRID_X; i++) {
-    for (int j = 0; j < GRID_Y; j++) {
-      printf("%c", grid[i][j]);
-    }
-    printf("\n");
-  }
-  printf("\n\n");
-}
-
-void doCycles(int lines, Bot bots[]) {
-  for (int i = 0; i < lines; i++) {
-    bots[i].pos[0] = (bots[i].pos[0] + 100 * bots[i].vel[0]) % GRID_X;
-    if (bots[i].pos[0] < 0) bots[i].pos[0] = GRID_X + bots[i].pos[0];
-    bots[i].pos[1] = (bots[i].pos[1] + 100 * bots[i].vel[1]) % GRID_Y;
-    if (bots[i].pos[1] < 0) bots[i].pos[1] = GRID_Y + bots[i].pos[1];
-  }
-}
-
 int getSafetyLevel(int lines, Bot bots[]) {
   int counts[4] = {0};
   for (int i = 0; i < lines; i++) {
@@ -66,29 +36,24 @@ int getSafetyLevel(int lines, Bot bots[]) {
   return counts[0] * counts[1] * counts[2] * counts[3];
 }
 
-void runEasterEgg(int lines, Bot bots[]) {
+void doCycle(int lines, Bot bots[]) {
   for (int i = 0; i < lines; i++) {
     bots[i].pos[0] = (bots[i].pos[0] + bots[i].vel[0]) % GRID_X;
     if (bots[i].pos[0] < 0) bots[i].pos[0] = GRID_X + bots[i].pos[0];
     bots[i].pos[1] = (bots[i].pos[1] + bots[i].vel[1]) % GRID_Y;
     if (bots[i].pos[1] < 0) bots[i].pos[1] = GRID_Y + bots[i].pos[1];
   }
-  //printGrid(lines, bots);
 }
 
-int checkBots(int lines, Bot bots[]) {
-  int grid[GRID_X][GRID_Y] = {0};
-  for (int i = 0; i < lines; i++) {
-    grid[bots[i].pos[0]][bots[i].pos[1]]++;
-  }
-  for (int i = 0; i < GRID_X; i++) {
-    for (int j = 0; j < GRID_Y; j++) {
-      if (grid[i][j] > 1) {
-        return 0;
-      }
+int getMinSafetyLevel(int levels[]) { 
+  int minValue = 2000000000, time = 0;
+  for (int i = 0; i < 10500; i++) {
+    if (levels[i] < minValue) {
+      minValue = levels[i];
+      time = i;
     }
   }
-  return 1;
+  return time;
 }
 
 int main(int argc, char** argv) {
@@ -96,19 +61,12 @@ int main(int argc, char** argv) {
 	int lineCount = readInput(input);
   Bot bots[lineCount];
   parseInput(input, lineCount, bots);
-  doCycles(lineCount, bots);
-  printf("Safety Level: %d\n",getSafetyLevel(lineCount, bots));
-  parseInput(input, lineCount, bots);
-  int i = 0;
-  while (1) {
-    runEasterEgg(lineCount, bots);
-    i++;
-    if (checkBots(lineCount, bots)) {
-      printGrid(lineCount, bots);
-      printf("%d\n", i);
-    }
+  int safetyLevels[10500];
+  for (int i = 0; i < 10500; i++) {
+    doCycle(lineCount, bots);
+    safetyLevels[i] = getSafetyLevel(lineCount, bots);
   }
-  printGrid(lineCount, bots);
-  printf("%d\n", i);
+  printf("Security Level: %d\n", safetyLevels[99]);
+  printf("Easter Egg time: %d\n", getMinSafetyLevel(safetyLevels) + 1);
 	return 0;
 } 
