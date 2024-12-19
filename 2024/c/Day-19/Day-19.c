@@ -34,16 +34,16 @@ int parseInput(char inputs[][3000], char exPats[][20], char desPats[][100]) {
     return exPatCount;
 }
 
-long checkPats(char* desPat, int currChar, long lut[100], char exPats[][20], int numTowels) {
+long checkPats(char* desPat, int currChar, long lut[100], char exPats[][20], int towelCount) {
 	if (lut[currChar] != -1) return lut[currChar];
 	long sum = 0;
 	char* subDesPat = desPat + currChar;
 	int sl = strlen(subDesPat);
-	for (int i = 0; i < numTowels; i++) {
+	for (int i = 0; i < towelCount; i++) {
 		int exPatLen = strlen(exPats[i]);
 		if (exPatLen == sl && strcmp(subDesPat, exPats[i]) == 0) sum ++;
 		if (exPatLen < sl && strncmp(subDesPat, exPats[i], exPatLen) == 0) {
-			sum += checkPats(desPat, currChar + exPatLen, lut, exPats, numTowels);
+			sum += checkPats(desPat, currChar + exPatLen, lut, exPats, towelCount);
 		}
 	}
 	lut[currChar] = sum;
